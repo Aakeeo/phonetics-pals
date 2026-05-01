@@ -311,3 +311,112 @@
 .bucket-icon  { font-size: 40px; line-height: 1; }
 .bucket-name  { font-family: 'Fredoka'; font-weight: 700; font-size: clamp(20px, 2.5vw, 24px); color: var(--ink); }
 .bucket-example { font-family: 'Nunito'; font-size: 14px; color: var(--ink-soft); margin-top: -2px; }
+
+/* =====================================================================
+   DRAG & DROP shared states
+   ===================================================================== */
+.dragging-source {
+  opacity: 0.25;
+  pointer-events: none;
+  transform: scale(.92);
+  transition: opacity .15s, transform .15s;
+}
+.drag-ghost {
+  filter: drop-shadow(0 12px 18px rgba(42,38,61,.35));
+  cursor: grabbing !important;
+  user-select: none;
+}
+.drop-zone {
+  position: relative;
+  transition: background .2s, transform .2s, box-shadow .2s, border-color .2s;
+}
+.drop-zone.drop-hover {
+  background: var(--paper-2) !important;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 0 var(--ink), 0 0 0 4px var(--sun) inset;
+}
+.drop-zone.drop-correct {
+  background: var(--mint) !important;
+  border-color: var(--ink) !important;
+  border-style: solid !important;
+  color: var(--ink) !important;
+  animation: rightPop .55s cubic-bezier(.34,1.56,.64,1);
+}
+.drop-zone.drop-wrong {
+  background: var(--coral) !important;
+  color: #fff !important;
+  animation: shakeNo .35s ease-in-out;
+}
+
+/* Sound Match — single drop target */
+.sm-target {
+  width: clamp(120px, 18vw, 160px);
+  height: clamp(120px, 18vw, 160px);
+  border: 4px dashed var(--ink-soft);
+  border-radius: 28px;
+  background: var(--paper);
+  display: grid; place-items: center;
+  font-family: 'Fredoka';
+  font-weight: 700;
+  font-size: clamp(64px, 9vw, 88px);
+  color: var(--ink);
+  text-transform: uppercase;
+  margin: 6px 0;
+}
+
+/* Word Builder slots already styled, just unify drag classes */
+.wb-slot.drop-correct { background: var(--mint); border-style: solid; border-color: var(--ink); }
+
+/* Vowel Sort — vs-current becomes a drag handle */
+.vs-current {
+  cursor: grab;
+  touch-action: none;
+}
+.vs-current.dragging-source { opacity: 0.25; }
+
+/* Digraph — basket */
+.dh-basket {
+  margin-top: 12px;
+  width: 100%;
+  border: 4px dashed var(--mint-deep);
+  background: var(--paper);
+  border-radius: 26px;
+  padding: 18px 16px;
+  min-height: 110px;
+  text-align: center;
+  font-family: 'Fredoka';
+  color: var(--ink-soft);
+  display: flex; align-items: center; justify-content: center;
+  flex-wrap: wrap; gap: 10px;
+  transition: background .2s, border-color .2s, transform .2s;
+}
+.dh-basket .basket-empty {
+  font-family: 'Nunito';
+  font-size: 16px;
+}
+.dh-basket .basket-found {
+  background: var(--mint);
+  color: var(--ink);
+  border: 2.5px solid var(--ink);
+  border-radius: 16px;
+  padding: 6px 14px;
+  box-shadow: 0 3px 0 var(--ink);
+  font-size: clamp(16px, 2vw, 20px);
+  animation: stickerPop .45s cubic-bezier(.34,1.56,.64,1);
+}
+.dh-basket.drop-hover {
+  background: var(--paper-2);
+  border-color: var(--mint-deep);
+  border-style: solid;
+}
+.dh-basket-label {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--mint);
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  padding: 4px 12px;
+  font-family: 'Fredoka';
+  font-size: 16px;
+  margin-right: 10px;
+  box-shadow: 0 3px 0 var(--ink);
+}

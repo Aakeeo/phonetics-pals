@@ -1,6 +1,8 @@
 /* ============================================================
    PHONICS PALS — games/wordbuilder.js
-   Tap letters to spell the picture
+   DRAG version: each slot expects a specific letter (per-position
+   validation). Right letter → slot turns green. Wrong letter → ghost
+   snaps back, gentle correction from Mr. Pip.
    ============================================================ */
 (function () {
   'use strict';
@@ -11,6 +13,7 @@
 
   const ROUNDS = 6;
   let game = null;
+  let wrongAttempts = 0;
 
   function start() {
     const rounds = shuffle([...wordBuilderWords]).slice(0, ROUNDS);
@@ -36,6 +39,7 @@
   function renderRound() {
     if (game.idx >= ROUNDS) return endGame();
     renderProgress();
+    wrongAttempts = 0;
     const r = game.rounds[game.idx];
     $('#wb-emoji').textContent = r.emoji;
     $('#wb-hint').textContent = r.hint;
@@ -43,9 +47,9 @@
     const slots = $('#wb-slots'); slots.innerHTML = '';
     for (let i = 0; i < r.word.length; i++) {
       const s = document.createElement('div');
-      s.className = 'wb-slot';
+      s.className = 'wb-slot drop-zone';
       s.dataset.idx = i;
-      s.addEventListener('click', () => slotClick(i));
+      s.dataset.expected = r.word[i].toLowerCase();
       slots.appendChild(s);
     }
 
@@ -56,47 +60,57 @@
       const b = document.createElement('button');
       b.className = 'pool-letter';
       b.textContent = ch.toUpperCase();
-      b.dataset.letter = ch;
-      b.dataset.idx = i;
-      b.addEventListener('click', () => pickLetter(b));
+      b.dataset.letter = ch.toLowerCase();
+      b.dataset.idx = String(i);
+      PP.dnd.makeDraggable(b, {
+        dropSelector: '.wb-slot',
+        onDrop: (zone, src) => onDropLetter(zone, src),
+      });
       pool.appendChild(b);
     });
-
     setTimeout(() => speak('Spell ' + r.word + '.'), 250);
   }
 
-  function pickLetter(btn) {
-    if (btn.classList.contains('used')) return;
-    const slots = $$('#wb-slots .wb-slot');
-    const empty = slots.find(s => !s.classList.contains('filled'));
-    if (!empty) return;
-    empty.textContent = btn.textContent;
-    empty.classList.add('filled');
-    empty.dataset.fromIdx = btn.dataset.idx;
-    empty.dataset.letter = btn.dataset.letter;
-    btn.classList.add('used');
-    sfx.tap();
-    if (slots.every(s => s.classList.contains('filled'))) check();
+  function onDropLetter(slot, src) {
+    if (slot.classList.contains('drop-correct')) {
+      // Already filled — wrong target
+      slot.classList.add('drop-wrong');
+      sfx.wrong();
+      setTimeout(() => slot.classList.remove('drop-wrong'), 500);
+      return false;
+    }
+    const expected = slot.dataset.expected;
+    const picked = src.dataset.letter;
+    if (picked === expected) {
+      slot.textContent = picked.toUpperCase();
+      slot.classList.add('drop-correct');
+      slot.dataset.letter = picked;
+      src.classList.add('used');
+      sfx.pop();
+      PP.confetti(8, { x: slot.getBoundingClientRect().left + 30, y: slot.getBoundingClientRect().top });
+      checkComplete();
+      return true;
+    } else {
+      // Wrong letter for this slot
+      slot.classList.add('drop-wrong');
+      sfx.wrong();
+      wrongAttempts++;
+      // Correct softly after the second mistake
+      if (wrongAttempts >= 2) {
+        const target = game.rounds[game.idx].word;
+        PP.teacher.correct('wordbuilder', target);
+      } else {
+        PP.teacher.encourage();
+      }
+      setTimeout(() => slot.classList.remove('drop-wrong'), 600);
+      return false;
+    }
   }
 
-  function slotClick(idx) {
-    const slot = $$('#wb-slots .wb-slot')[idx];
-    if (!slot.classList.contains('filled')) return;
-    const fromIdx = slot.dataset.fromIdx;
-    slot.textContent = '';
-    slot.classList.remove('filled');
-    delete slot.dataset.fromIdx; delete slot.dataset.letter;
-    const btn = $$('#wb-pool .pool-letter').find(b => b.dataset.idx === fromIdx);
-    if (btn) btn.classList.remove('used');
-    sfx.tap();
-  }
-
-  function check() {
+  function checkComplete() {
     const slots = $$('#wb-slots .wb-slot');
-    const built = slots.map(s => (s.dataset.letter || '').toLowerCase()).join('');
-    const target = game.rounds[game.idx].word.toLowerCase();
-    if (built === target) {
-      slots.forEach(s => s.classList.add('right'));
+    if (slots.every(s => s.classList.contains('drop-correct'))) {
+      const target = game.rounds[game.idx].word;
       sfx.correct();
       PP.app.awardStar('wordbuilder');
       game.correct++;
@@ -104,32 +118,16 @@
       PP.confetti(30, { y: window.innerHeight * 0.4 });
       speak(target + '!');
       setTimeout(() => { game.idx++; renderRound(); }, 1700);
-    } else {
-      sfx.wrong();
-      PP.teacher.correct('wordbuilder', target);
-      slots.forEach(s => {
-        s.style.animation = 'shakeNo .35s ease-in-out';
-        setTimeout(() => s.style.animation = '', 380);
-      });
-      // Auto-clear after correction so kid can try again
-      setTimeout(clearSlots, 1800);
     }
   }
 
   function clearSlots() {
     $$('#wb-slots .wb-slot').forEach(s => {
       s.textContent = '';
-      s.classList.remove('filled', 'right');
-      delete s.dataset.fromIdx;
+      s.classList.remove('drop-correct', 'drop-wrong');
       delete s.dataset.letter;
     });
     $$('#wb-pool .pool-letter').forEach(b => b.classList.remove('used'));
-    // Hint: pulse the first slot
-    const first = $$('#wb-slots .wb-slot')[0];
-    if (first) {
-      first.classList.add('hint');
-      setTimeout(() => first.classList.remove('hint'), 2000);
-    }
   }
 
   function endGame() {

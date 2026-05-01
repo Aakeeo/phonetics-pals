@@ -4,7 +4,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  const { $, todayString } = PP.utils;
+  const { $, todayString, displayName, nameSlug } = PP.utils;
   const { sfx } = PP.audio;
   const { stickerCatalog } = PP.data;
 
@@ -13,7 +13,7 @@
   // ----- Game completion modal -----
   function show({ title, msg, earned, total, sticker, onReplay }) {
     pendingReplay = onReplay;
-    $('#results-title').innerHTML = `${title} <span>${PP.state.name}</span>!`;
+    $('#results-title').innerHTML = `${title} <span>${displayName()}</span>!`;
     $('#results-msg').textContent = msg;
     const pct = earned / Math.max(1, total);
     const lit = pct >= 1 ? 3 : pct >= 0.6 ? 2 : pct >= 0.3 ? 1 : 0;
@@ -185,7 +185,7 @@
     // Kid's name (huge)
     ctx.fillStyle = '#2a263d';
     ctx.font = '700 90px Fredoka, sans-serif';
-    const name = (PP.state.name || 'Friend').slice(0, 18);
+    const name = displayName().slice(0, 18);
     ctx.fillText(name, W / 2, 320);
 
     // Underline squiggle
@@ -298,7 +298,7 @@
     const url = cv.toDataURL('image/png');
     const a = document.createElement('a');
     a.href = url;
-    a.download = `phonics-pal-${(PP.state.name || 'friend').toLowerCase().replace(/\s+/g, '-')}.png`;
+    a.download = `phonics-pal-${nameSlug()}.png`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -309,14 +309,14 @@
     const cv = $('#cert-canvas');
     const url = cv.toDataURL('image/png');
     const summary = textSummary();
-    const filename = `phonics-pal-${(PP.state.name || 'friend').toLowerCase().replace(/\s+/g, '-')}.png`;
+    const filename = `phonics-pal-${nameSlug()}.png`;
 
     if (navigator.canShare) {
       try {
         const file = await dataUrlToFile(url, filename);
         if (navigator.canShare({ files: [file] })) {
           await navigator.share({
-            title: `${PP.state.name}'s Phonics Pal Certificate`,
+            title: `${displayName()}'s Phonics Pal Certificate`,
             text: summary,
             files: [file],
           });
@@ -328,7 +328,7 @@
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `${PP.state.name}'s Phonics Pal Certificate`,
+          title: `${displayName()}'s Phonics Pal Certificate`,
           text: summary,
         });
         $('#cert-status').textContent = '✅ Shared!';
@@ -346,7 +346,7 @@
       const meta = Object.values(stickerCatalog).find(s => s.id === id);
       return meta ? meta.emoji : '';
     }).join('');
-    return `🦉 ${PP.state.name}'s Phonics Pals report:\n` +
+    return `🦉 ${displayName()}'s Phonics Pals report:\n` +
            `⭐ ${PP.state.totalStars} stars earned\n` +
            `🎟  Stickers: ${stickers || 'none yet'}\n` +
            `📅 ${todayString()}\n` +

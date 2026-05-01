@@ -29,10 +29,12 @@
       const id = allIds[i];
       if (id && PP.state.stickers.has(id)) {
         const meta = Object.values(stickerCatalog).find(s => s.id === id);
-        slot.classList.add('unlocked');
-        slot.style.setProperty('--rot', `${(i % 2 ? 4 : -4)}deg`);
-        slot.textContent = meta.emoji;
-        slot.title = meta.name;
+        if (meta) {
+          slot.classList.add('unlocked');
+          slot.style.setProperty('--rot', `${(i % 2 ? 4 : -4)}deg`);
+          slot.textContent = meta.emoji;
+          slot.title = meta.name;
+        }
       }
       row.appendChild(slot);
     }

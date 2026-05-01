@@ -38,5 +38,16 @@
     return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
   }
 
-  PP.utils = { $, $$, shuffle, pick, pickN, storeGet, storeSet, cap, todayString };
+  // Safe display name — always returns a non-empty, kid-friendly string
+  function displayName() {
+    const n = (PP.state && PP.state.name) ? String(PP.state.name).trim() : '';
+    return n || 'friend';
+  }
+
+  // Safe filename slug from name
+  function nameSlug() {
+    return displayName().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'friend';
+  }
+
+  PP.utils = { $, $$, shuffle, pick, pickN, storeGet, storeSet, cap, todayString, displayName, nameSlug };
 })();

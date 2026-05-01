@@ -1,6 +1,7 @@
 /* ============================================================
    PHONICS PALS — games/vowel.js
-   Sort each word: short or long vowel?
+   DRAG version: drag the word card into the short or long bucket.
+   Right bucket turns green; wrong shakes red and word snaps back.
    ============================================================ */
 (function () {
   'use strict';
@@ -38,7 +39,6 @@
     renderProgress();
     const r = game.rounds[game.idx];
     const w = $('#vs-word');
-    // Highlight the vowel inside the word
     const idx = r.word.indexOf(r.vowel);
     if (idx >= 0) {
       w.innerHTML =
@@ -48,33 +48,51 @@
     } else {
       w.textContent = r.word;
     }
-    $$('.vs-bucket').forEach(b => b.classList.remove('right', 'wrong', 'hint'));
+    $$('.vs-bucket').forEach(b => b.classList.remove('drop-correct', 'drop-wrong', 'hint'));
     setTimeout(() => speak(r.word), 200);
   }
 
-  function pickBucket(b) {
-    if (!game) return;
+  function onDropBucket(bucket) {
+    if (!game) return false;
     const r = game.rounds[game.idx];
-    if (b.dataset.len === r.len) {
-      b.classList.add('right');
+    if (bucket.dataset.len === r.len) {
+      bucket.classList.add('drop-correct');
       sfx.correct();
       PP.app.awardStar('vowel');
       game.correct++;
       PP.teacher.cheer();
       PP.confetti(24);
       setTimeout(() => { game.idx++; renderRound(); }, 1300);
+      return true;
     } else {
-      b.classList.add('wrong');
+      bucket.classList.add('drop-wrong');
       sfx.wrong();
       PP.teacher.correct('vowel', r.word, r.len);
-      // Hint the right bucket
       const right = $$('.vs-bucket').find(x => x.dataset.len === r.len);
       if (right) {
         setTimeout(() => right.classList.add('hint'), 700);
         setTimeout(() => right.classList.remove('hint'), 2700);
       }
-      setTimeout(() => b.classList.remove('wrong'), 800);
+      setTimeout(() => bucket.classList.remove('drop-wrong'), 800);
+      return false;
     }
+  }
+
+  function init() {
+    const wordCard = $('#vs-word');
+    wordCard.classList.add('drop-zone');
+    PP.dnd.makeDraggable(wordCard, {
+      dropSelector: '.vs-bucket',
+      onDrop: (zone) => onDropBucket(zone),
+    });
+
+    // Tap as fallback (also kid-friendly)
+    $$('.vs-bucket').forEach(b => b.addEventListener('click', () => onDropBucket(b)));
+    $('#vs-hear').addEventListener('click', () => {
+      if (!game) return;
+      sfx.pop();
+      speak(game.rounds[game.idx].word);
+    });
   }
 
   function endGame() {
@@ -91,15 +109,6 @@
       earned, total: ROUNDS,
       sticker: unlocked,
       onReplay: start,
-    });
-  }
-
-  function init() {
-    $$('.vs-bucket').forEach(b => b.addEventListener('click', () => pickBucket(b)));
-    $('#vs-hear').addEventListener('click', () => {
-      if (!game) return;
-      sfx.pop();
-      speak(game.rounds[game.idx].word);
     });
   }
 

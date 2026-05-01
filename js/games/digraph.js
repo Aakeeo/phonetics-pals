@@ -1,6 +1,7 @@
 /* ============================================================
    PHONICS PALS — games/digraph.js
-   Find every word with the target digraph (sh, ch, th)
+   DRAG version: drag words containing the digraph into the basket.
+   Wrong word → shakes red and snaps back. Right word → joins basket.
    ============================================================ */
 (function () {
   'use strict';
@@ -27,6 +28,7 @@
     $('#dh-target').textContent = `Find: ${round.target}`;
     $('#dh-found').textContent = '0';
     $('#dh-total').textContent = round.answers.length;
+    resetBasket();
     renderBoard();
     setTimeout(() => speak(`Find words with ${round.target}!`), 1900);
   }
@@ -37,6 +39,14 @@
     return word.slice(0, i) + `<span class="digraph-hl">${word.slice(i, i + target.length)}</span>` + word.slice(i + target.length);
   }
 
+  function resetBasket() {
+    const basket = $('#dh-basket');
+    // Remove any previously-found chips, keep the label + empty hint
+    Array.from(basket.querySelectorAll('.basket-found')).forEach(n => n.remove());
+    const empty = $('#dh-basket-empty');
+    if (empty) empty.style.display = '';
+  }
+
   function renderBoard() {
     const board = $('#dh-board');
     board.innerHTML = '';
@@ -44,31 +54,47 @@
       const c = document.createElement('button');
       c.className = 'word-card';
       c.dataset.word = w;
-      c.textContent = w; // show plain — kid hunts; we reveal-highlight after right answer
-      c.addEventListener('click', () => pick(c, w));
+      c.textContent = w;
+      PP.dnd.makeDraggable(c, {
+        dropSelector: '#dh-basket',
+        onDrop: (zone, src) => onDropWord(zone, src),
+      });
       board.appendChild(c);
     });
   }
 
-  function pick(card, w) {
-    if (card.classList.contains('found')) return;
+  function onDropWord(basket, src) {
+    const w = src.dataset.word;
     if (game.answers.has(w)) {
-      card.classList.add('right', 'found');
-      // Reveal the digraph highlight on the correct word
-      card.innerHTML = highlightDigraph(w, game.target);
+      // Right — add to basket
+      src.classList.add('drop-correct');
       sfx.correct();
       PP.app.awardStar('digraph');
       game.found++;
       $('#dh-found').textContent = game.found;
+      // Hide the empty label once first found
+      const empty = $('#dh-basket-empty');
+      if (empty) empty.style.display = 'none';
+      // Make a chip in the basket
+      const chip = document.createElement('span');
+      chip.className = 'basket-found';
+      chip.innerHTML = highlightDigraph(w, game.target);
+      basket.appendChild(chip);
+      // Source becomes inert
+      src.style.pointerEvents = 'none';
+      src.style.opacity = '0.5';
       PP.teacher.cheer();
       PP.confetti(20);
       speak(w + '!', { rate: 0.95 });
       if (game.found === game.answers.size) setTimeout(endGame, 1300);
+      return true;
     } else {
-      card.classList.add('wrong');
+      // Wrong word — shake basket briefly + Mr. Pip explains
+      basket.classList.add('drop-wrong');
       sfx.wrong();
       PP.teacher.correct('digraph', w, game.target.toUpperCase(), game.example);
-      setTimeout(() => card.classList.remove('wrong'), 800);
+      setTimeout(() => basket.classList.remove('drop-wrong'), 800);
+      return false;
     }
   }
 
@@ -90,7 +116,7 @@
   }
 
   function init() {
-    // Static screen — no extra controls beyond board taps
+    // Static screen
   }
 
   PP.games = PP.games || {};

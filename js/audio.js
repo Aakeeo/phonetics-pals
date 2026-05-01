@@ -1,7 +1,8 @@
 /* ============================================================
    PHONICS PALS — audio.js
-   Web Audio sound effects + Speech Synthesis (Mr. Pip's voice)
-   Attaches PP.audio (sfx + speak helpers) and PP.voices (picker)
+   Web Audio sfx + Speech routing (ElevenLabs OR browser TTS).
+   Mr. Pip can speak in 5 languages with code-switched English
+   nouns, via ElevenLabs eleven_multilingual_v2.
    ============================================================ */
 (function () {
   'use strict';
@@ -42,7 +43,9 @@
     fanfare: () => chord([392, 523, 659, 784, 1046], 0.08, 0.4),
   };
 
-  /* -------- Speech Synthesis -------- */
+  /* ============================================================
+     Browser Speech Synthesis (fallback)
+     ============================================================ */
   let englishVoices = [];
   let chosenVoiceName = storeGet('phonics-voice', null);
   const onVoicesChangedCallbacks = [];
@@ -66,7 +69,6 @@
     };
     englishVoices.sort((a, b) => score(b) - score(a));
     if (chosenVoiceName && !englishVoices.find(v => v.name === chosenVoiceName)) {
-      // Saved voice missing — fall back
       chosenVoiceName = null;
     }
     if (!chosenVoiceName && englishVoices[0]) chosenVoiceName = englishVoices[0].name;
@@ -77,7 +79,7 @@
     refreshVoices();
   }
 
-  function pickVoice() {
+  function pickEnglishVoice() {
     if (!englishVoices.length) refreshVoices();
     if (chosenVoiceName) {
       const m = englishVoices.find(v => v.name === chosenVoiceName);
@@ -85,10 +87,23 @@
     }
     return englishVoices[0] || null;
   }
+  function pickVoiceForLang(langCode) {
+    if (!('speechSynthesis' in window)) return null;
+    const all = speechSynthesis.getVoices() || [];
+    if (langCode === 'en') return pickEnglishVoice();
+    const meta = PP.data.LANGS[langCode];
+    if (!meta) return pickEnglishVoice();
+    // Match locale exactly, else by language prefix
+    return all.find(v => v.lang.replace('_', '-').toLowerCase() === meta.ttsLang.toLowerCase())
+        || all.find(v => v.lang.toLowerCase().startsWith(langCode + '-')
+                       || v.lang.toLowerCase().startsWith(langCode + '_')
+                       || v.lang.toLowerCase() === langCode)
+        || pickEnglishVoice();
+  }
   function isPremium(v) {
     return /Natural|Neural|Online|Premium|Enhanced|Studio|Wavenet|Google|Microsoft.*Online/i.test(v.name);
   }
-  function setVoice(name) {
+  function setEnglishVoice(name) {
     chosenVoiceName = name;
     storeSet('phonics-voice', name);
   }
@@ -96,30 +111,163 @@
   function getEnglishVoices() { return englishVoices; }
   function onVoicesChanged(cb) { onVoicesChangedCallbacks.push(cb); }
 
-  // Track whether speech is in flight, so we can offer "stop" if needed
   let speakingNow = false;
 
-  function speak(text, opts = {}) {
-    if (!('speechSynthesis' in window)) return;
+  function speakBrowser(text, opts = {}) {
+    if (!('speechSynthesis' in window)) return false;
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.rate   = opts.rate   ?? 0.88;
     u.pitch  = opts.pitch  ?? 1.05;
     u.volume = opts.volume ?? 1;
-    const voice = pickVoice();
+    const lang = PP.data.getLang();
+    const voice = pickVoiceForLang(lang);
     if (voice) { u.voice = voice; u.lang = voice.lang; }
-    else u.lang = 'en-US';
-    u.onstart = () => { speakingNow = true; if (opts.onstart) opts.onstart(); };
-    u.onend = () => { speakingNow = false; if (opts.onend) opts.onend(); };
+    else { u.lang = (PP.data.getLangMeta() || {}).ttsLang || 'en-US'; }
+    u.onstart = () => { speakingNow = true; opts.onstart && opts.onstart(); };
+    u.onend   = () => { speakingNow = false; opts.onend && opts.onend(); };
     u.onerror = () => { speakingNow = false; };
     speechSynthesis.speak(u);
+    return true;
   }
+
+  /* ============================================================
+     ElevenLabs adapter (BYO key)
+     ============================================================ */
+  const EL = {
+    apiBase: 'https://api.elevenlabs.io',
+    enabled: storeGet('phonics-el-enabled', false),
+    key:     storeGet('phonics-el-key', ''),
+    voiceId: storeGet('phonics-el-voice', ''),
+    voiceName: storeGet('phonics-el-voice-name', ''),
+    model: 'eleven_multilingual_v2',
+  };
+  const audioCache = new Map(); // (voiceId|text) -> Promise<blobUrl>
+  let currentEl = null;
+
+  function elState() {
+    return { ...EL };
+  }
+  function elSetKey(k) {
+    EL.key = (k || '').trim();
+    storeSet('phonics-el-key', EL.key);
+    if (!EL.key) {
+      EL.enabled = false;
+      storeSet('phonics-el-enabled', false);
+    }
+  }
+  function elSetEnabled(b) {
+    EL.enabled = !!b;
+    storeSet('phonics-el-enabled', EL.enabled);
+  }
+  function elSetVoice(id, name) {
+    EL.voiceId = id || '';
+    EL.voiceName = name || '';
+    storeSet('phonics-el-voice', EL.voiceId);
+    storeSet('phonics-el-voice-name', EL.voiceName);
+  }
+  function elIsReady() {
+    return !!(EL.enabled && EL.key && EL.voiceId);
+  }
+
+  async function elFetchVoices() {
+    if (!EL.key) throw new Error('No API key set');
+    const r = await fetch(EL.apiBase + '/v1/voices', {
+      headers: { 'xi-api-key': EL.key, accept: 'application/json' },
+    });
+    if (!r.ok) {
+      const msg = r.status === 401 ? 'Invalid API key' : `ElevenLabs ${r.status}`;
+      throw new Error(msg);
+    }
+    const data = await r.json();
+    return (data.voices || []).map(v => ({
+      voice_id: v.voice_id,
+      name: v.name,
+      preview: v.preview_url,
+      labels: v.labels || {},
+      category: v.category,
+    }));
+  }
+
+  async function elTextToSpeech(text) {
+    const cacheKey = EL.voiceId + '|' + text;
+    if (audioCache.has(cacheKey)) return audioCache.get(cacheKey);
+    const promise = (async () => {
+      const r = await fetch(EL.apiBase + '/v1/text-to-speech/' + encodeURIComponent(EL.voiceId), {
+        method: 'POST',
+        headers: {
+          'xi-api-key': EL.key,
+          'Content-Type': 'application/json',
+          'accept': 'audio/mpeg',
+        },
+        body: JSON.stringify({
+          text,
+          model_id: EL.model,
+          voice_settings: {
+            stability: 0.55,
+            similarity_boost: 0.85,
+            style: 0.20,
+            use_speaker_boost: true,
+          },
+        }),
+      });
+      if (!r.ok) throw new Error('ElevenLabs TTS ' + r.status);
+      const blob = await r.blob();
+      return URL.createObjectURL(blob);
+    })();
+    audioCache.set(cacheKey, promise);
+    promise.catch(() => audioCache.delete(cacheKey));
+    return promise;
+  }
+
+  function elStop() {
+    if (currentEl) {
+      try { currentEl.pause(); currentEl.currentTime = 0; } catch (e) {}
+      currentEl = null;
+    }
+  }
+
+  async function speakElevenLabs(text, opts = {}) {
+    if (!elIsReady()) return false;
+    elStop();
+    try {
+      const url = await elTextToSpeech(text);
+      const a = new Audio(url);
+      currentEl = a;
+      a.playbackRate = opts.rate ?? 1.0;
+      a.onplay  = () => { speakingNow = true; opts.onstart && opts.onstart(); };
+      a.onended = () => { speakingNow = false; opts.onend && opts.onend(); currentEl = null; };
+      a.onerror = () => { speakingNow = false; currentEl = null; };
+      await a.play();
+      return true;
+    } catch (e) {
+      // Fallback to browser TTS
+      return false;
+    }
+  }
+
+  /* ============================================================
+     Public speak() — routes to EL if ready, else browser
+     ============================================================ */
+  function speak(text, opts = {}) {
+    if (!text) return;
+    // Try ElevenLabs first
+    if (elIsReady()) {
+      speakElevenLabs(text, opts).then(ok => {
+        if (!ok) speakBrowser(text, opts);
+      });
+      return;
+    }
+    speakBrowser(text, opts);
+  }
+
   function stop() {
+    elStop();
     if ('speechSynthesis' in window) speechSynthesis.cancel();
     speakingNow = false;
   }
 
-  // Warm up speech on first interaction (some browsers gate it)
+  // Warm up audio on first interaction
   window.addEventListener('pointerdown', function warm() {
     ensureAudio();
     if ('speechSynthesis' in window) {
@@ -139,8 +287,17 @@
     refresh: refreshVoices,
     list: getEnglishVoices,
     chosen: getChosenName,
-    set: setVoice,
+    set: setEnglishVoice,
     isPremium,
     onChange: onVoicesChanged,
+  };
+  PP.elevenlabs = {
+    state: elState,
+    setKey: elSetKey,
+    setEnabled: elSetEnabled,
+    setVoice: elSetVoice,
+    isReady: elIsReady,
+    fetchVoices: elFetchVoices,
+    clearCache: () => audioCache.clear(),
   };
 })();

@@ -228,6 +228,7 @@
       <div class="sm-prompt">
         <div class="lbl">Listen carefully…</div>
         <button class="hear-btn" id="sm-hear"><span class="ear">🔊</span> Play again</button>
+        <div class="sm-target drop-zone" id="sm-target" data-drop="sm">?</div>
       </div>
       <div class="sm-choices" id="sm-choices"></div>
     </div>
@@ -266,6 +267,10 @@
     </div>
     <div class="game-area">
       <div class="dh-board" id="dh-board"></div>
+      <div class="dh-basket drop-zone" id="dh-basket" data-drop="dh">
+        <span class="dh-basket-label">🧺 Drop here</span>
+        <span class="basket-empty" id="dh-basket-empty">Drag matching words into the basket!</span>
+      </div>
     </div>
   </section>
 
@@ -305,16 +310,49 @@
     </div>
   </div>
 
-  <!-- ===================== VOICE PICKER ===================== -->
-  <button class="voice-btn" id="voice-btn" aria-label="Pick voice" title="Pick voice">
-    <span class="voice-ico">🔈</span><span class="voice-lbl">Voice</span>
+  <!-- ===================== SETTINGS ===================== -->
+  <button class="voice-btn" id="settings-btn" aria-label="Settings" title="Settings">
+    <span class="voice-ico">⚙️</span><span class="voice-lbl">Settings</span>
   </button>
   <div class="modal-overlay" id="voice-modal">
-    <div class="modal voice-modal-inner">
-      <h2>Pick Mr. Pip's <span>voice</span></h2>
-      <p class="modal-msg">Tap one to test it. Pick the warmest, clearest voice.</p>
-      <div class="voice-list" id="voice-list"></div>
-      <div class="voice-tip" id="voice-tip"></div>
+    <div class="modal voice-modal-inner settings-modal-inner">
+      <h2>Mr. Pip's <span>settings</span></h2>
+
+      <!-- Language section -->
+      <div class="settings-section">
+        <div class="settings-heading">🌍 Language</div>
+        <p class="settings-sub">Mr. Pip explains in your language. Letters &amp; words stay English.</p>
+        <div class="lang-grid" id="lang-grid"></div>
+      </div>
+
+      <!-- ElevenLabs section -->
+      <div class="settings-section">
+        <div class="settings-heading">🪄 ElevenLabs voice (optional)</div>
+        <p class="settings-sub">For warm, natural voices in any language. Bring your own API key — stays in your browser only.</p>
+        <label class="el-switch">
+          <input type="checkbox" id="el-enabled" />
+          <span>Use ElevenLabs</span>
+        </label>
+        <div class="el-key-row">
+          <input type="password" id="el-key" placeholder="ElevenLabs API key (starts with sk_…)" autocomplete="off" />
+          <button class="btn btn-ghost el-key-save" id="el-key-save">Save</button>
+        </div>
+        <p class="el-hint" id="el-hint">Get a free key at <a href="https://elevenlabs.io/app/settings/api-keys" target="_blank" rel="noopener">elevenlabs.io</a> · Free tier ≈ 10k chars/month.</p>
+        <div class="el-voice-row hidden" id="el-voice-row">
+          <select id="el-voice"><option value="">Loading voices…</option></select>
+          <button class="btn btn-ghost el-voice-test" id="el-voice-test" title="Test voice">▶</button>
+        </div>
+        <p class="el-status" id="el-status"></p>
+      </div>
+
+      <!-- Browser voice fallback -->
+      <div class="settings-section" id="browser-voice-section">
+        <div class="settings-heading">🔈 Browser voice (fallback)</div>
+        <p class="settings-sub">Used when ElevenLabs is off. Picks an English voice from your device.</p>
+        <div class="voice-list" id="voice-list"></div>
+        <div class="voice-tip" id="voice-tip"></div>
+      </div>
+
       <div class="modal-actions">
         <button class="btn btn-mint" id="voice-close">Done</button>
       </div>
@@ -363,6 +401,7 @@
 </div>
 
 <script src="js/utils.js"></script>
+<script src="js/dnd.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/data.js"></script>
 <script src="js/teacher.js"></script>

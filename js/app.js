@@ -137,6 +137,75 @@
     }
   }
 
+  // ----- Language picker -----
+  function renderLangGrid() {
+    const grid = $('#lang-grid');
+    if (!grid) return;
+    const current = PP.data.getLang();
+    grid.innerHTML = '';
+    Object.keys(PP.data.LANGS).forEach(code => {
+      const meta = PP.data.LANGS[code];
+      const card = document.createElement('button');
+      card.className = 'lang-card' + (code === current ? ' active' : '');
+      card.dataset.lang = code;
+      card.innerHTML = `<div class="lang-native">${meta.native}</div><div class="lang-en">${meta.name}</div>`;
+      card.addEventListener('click', () => {
+        sfx.pop();
+        PP.data.setLang(code);
+        renderLangGrid();
+        // Greet in the new language
+        const greetLine = PP.data.getDialogue().greetingNew[0](state.name);
+        PP.teacher.say(greetLine, { mood: 'happy', bubbleMs: 5000 });
+      });
+      grid.appendChild(card);
+    });
+  }
+
+  // ----- ElevenLabs UI -----
+  function renderEL() {
+    const el = PP.elevenlabs.state();
+    $('#el-enabled').checked = !!el.enabled;
+    $('#el-key').value = el.key || '';
+    if (el.key && el.voiceName) {
+      // Voice list will be loaded async on demand
+    }
+    $('#el-voice-row').classList.toggle('hidden', !el.key);
+    $('#el-status').textContent = el.enabled && el.key && el.voiceId
+      ? `🪄 Using ElevenLabs: ${el.voiceName || el.voiceId.slice(0, 8)}`
+      : '';
+    $('#el-status').classList.remove('error');
+  }
+  async function loadELVoices() {
+    const status = $('#el-status');
+    status.textContent = 'Loading voices…';
+    status.classList.remove('error');
+    try {
+      const voices = await PP.elevenlabs.fetchVoices();
+      const sel = $('#el-voice');
+      sel.innerHTML = '';
+      const cur = PP.elevenlabs.state().voiceId;
+      voices.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.voice_id;
+        opt.dataset.name = v.name;
+        const tags = v.labels && (v.labels.gender || v.labels.accent) ? ` (${[v.labels.gender, v.labels.accent].filter(Boolean).join(', ')})` : '';
+        opt.textContent = v.name + tags;
+        if (v.voice_id === cur) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      if (!cur && voices[0]) {
+        // Auto-select the first voice
+        PP.elevenlabs.setVoice(voices[0].voice_id, voices[0].name);
+        sel.value = voices[0].voice_id;
+      }
+      $('#el-voice-row').classList.remove('hidden');
+      status.textContent = '✓ ' + voices.length + ' voices loaded';
+    } catch (e) {
+      status.textContent = '⚠ ' + (e.message || 'Could not load voices');
+      status.classList.add('error');
+    }
+  }
+
   function init() {
     // Wire teacher init
     PP.teacher.init();
@@ -183,11 +252,15 @@
       });
     });
 
-    // Voice picker
-    $('#voice-btn').addEventListener('click', () => {
+    // Settings (was Voice picker)
+    $('#settings-btn').addEventListener('click', () => {
       sfx.tap();
       PP.voices.refresh();
       renderVoiceList();
+      renderLangGrid();
+      renderEL();
+      // Auto-load EL voices if key already saved
+      if (PP.elevenlabs.state().key) loadELVoices();
       $('#voice-modal').classList.add('active');
     });
     $('#voice-close').addEventListener('click', () => {
@@ -196,6 +269,37 @@
     });
     $('#voice-modal').addEventListener('click', e => {
       if (e.target.id === 'voice-modal') $('#voice-modal').classList.remove('active');
+    });
+
+    // ElevenLabs controls
+    $('#el-enabled').addEventListener('change', e => {
+      PP.elevenlabs.setEnabled(e.target.checked);
+      renderEL();
+    });
+    $('#el-key-save').addEventListener('click', async () => {
+      sfx.tap();
+      const key = $('#el-key').value.trim();
+      PP.elevenlabs.setKey(key);
+      if (key) {
+        // Auto-enable when first key saved
+        if (!PP.elevenlabs.state().enabled) PP.elevenlabs.setEnabled(true);
+        renderEL();
+        await loadELVoices();
+      } else {
+        PP.elevenlabs.setEnabled(false);
+        renderEL();
+      }
+    });
+    $('#el-voice').addEventListener('change', e => {
+      const sel = e.target;
+      const opt = sel.options[sel.selectedIndex];
+      PP.elevenlabs.setVoice(sel.value, opt ? opt.dataset.name : '');
+      renderEL();
+    });
+    $('#el-voice-test').addEventListener('click', () => {
+      sfx.tap();
+      const greet = PP.data.getDialogue().greetingNew[0](state.name);
+      PP.speech.speak(greet);
     });
 
     // Init child modules

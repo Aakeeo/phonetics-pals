@@ -1,12 +1,12 @@
 /* ============================================================
    PHONICS PALS — teacher.js
-   Mr. Pip — character behaviors, speech bubble, dialogue API
+   Mr. Pip — character behaviors, speech bubble, dialogue API.
+   Always uses the CURRENT language via PP.data.getDialogue().
    ============================================================ */
 (function () {
   'use strict';
-  const { $, pick } = PP.utils;
+  const { $, pick, displayName } = PP.utils;
   const { speak } = PP.speech;
-  const { dialogue } = PP.data;
 
   let stage, character, bubble, bubbleText, bubbleReplay;
   let bubbleTimer = null;
@@ -24,12 +24,8 @@
     });
     character.addEventListener('click', () => {
       if (lastSpoken) speak(lastSpoken);
-      else say(pick(dialogue.cheers)(state().name));
+      else say(pick(PP.data.getDialogue().cheers)(displayName()));
     });
-  }
-
-  function state() {
-    return PP.state || { name: 'friend' };
   }
 
   function setMood(mood = 'happy') {
@@ -48,7 +44,7 @@
 
   function setSize(size) {
     if (!stage) return;
-    stage.dataset.size = size; // 'small' | 'medium' | 'hidden'
+    stage.dataset.size = size;
   }
 
   function showBubble(text, durationMs = 6000) {
@@ -66,63 +62,76 @@
     if (bubbleTimer) { clearTimeout(bubbleTimer); bubbleTimer = null; }
   }
 
-  // Core API: have Mr. Pip say something (text + speech + bubble + mood)
   function say(text, opts = {}) {
+    if (!text) return;
     lastSpoken = text;
     if (opts.mood) setMood(opts.mood);
     showBubble(text, opts.bubbleMs ?? 6500);
     speak(text, { rate: opts.rate, pitch: opts.pitch });
   }
 
-  // Convenience: say a varied cheer
   function cheer() {
-    const n = state().name;
-    const line = pick(dialogue.cheers)(n);
+    const n = displayName();
+    const line = pick(PP.data.getDialogue().cheers)(n);
     say(line, { mood: 'celebrate', bubbleMs: 2200 });
   }
-  // Convenience: say a varied gentle encouragement
   function encourage() {
-    const n = state().name;
-    const line = pick(dialogue.encourage)(n);
+    const n = displayName();
+    const line = pick(PP.data.getDialogue().encourage)(n);
     say(line, { mood: 'thinking', bubbleMs: 3500 });
   }
-  // Contextual correction — explains AND re-prompts
   function correct(game, ...args) {
-    const fn = dialogue.correct[game];
+    const fn = PP.data.getDialogue().correct[game];
     if (!fn) return;
-    const line = fn(...args);
+    let line;
+    try { line = fn(...args); } catch (e) { return; }
     say(line, { mood: 'thinking', bubbleMs: 7000 });
   }
-
   function intro(game, ...args) {
-    const n = state().name;
-    const lines = dialogue.gameIntro[game];
-    if (!lines) return;
+    const n = displayName();
+    const lines = PP.data.getDialogue().gameIntro[game];
+    if (!lines || !lines.length) return;
     const fn = pick(lines);
-    const line = fn(n, ...args);
+    let line;
+    try { line = fn(n, ...args); } catch (e) { return; }
     say(line, { mood: 'happy', bubbleMs: 5500 });
   }
-
   function summary(kind, score, total) {
-    const n = state().name;
-    const fn = dialogue.summary[kind];
+    const n = displayName();
+    const fn = PP.data.getDialogue().summary[kind];
     if (!fn) return null;
-    return fn(n, score, total);
+    try { return fn(n, score, total); } catch (e) { return null; }
   }
-
   function greet(returning) {
-    const n = state().name;
-    const lines = returning ? dialogue.greetingReturning : dialogue.greetingNew;
+    const n = displayName();
+    const lines = returning
+      ? PP.data.getDialogue().greetingReturning
+      : PP.data.getDialogue().greetingNew;
+    if (!lines || !lines.length) return;
     say(pick(lines)(n), { mood: 'happy', bubbleMs: 6000 });
   }
-
   function hubLine() {
-    const n = state().name;
-    say(pick(dialogue.hubGreet)(n), { mood: 'happy', bubbleMs: 5500 });
+    const n = displayName();
+    const lines = PP.data.getDialogue().hubGreet;
+    if (!lines || !lines.length) return;
+    say(pick(lines)(n), { mood: 'happy', bubbleMs: 5500 });
+  }
+  function tutorialIntro() {
+    const n = displayName();
+    const lines = PP.data.getDialogue().tutorialIntro;
+    if (!lines || !lines.length) return;
+    say(pick(lines)(n), { mood: 'happy', bubbleMs: 5500 });
+  }
+  function tutorialEnd() {
+    const n = displayName();
+    const lines = PP.data.getDialogue().tutorialEnd;
+    if (!lines || !lines.length) return;
+    say(pick(lines)(n), { mood: 'celebrate', bubbleMs: 4500 });
   }
 
   PP.teacher = {
     init, say, cheer, encourage, correct, intro, summary, greet,
-    hubLine, setMood, setSize, hideBubble, showBubble,
+    hubLine, tutorialIntro, tutorialEnd,
+    setMood, setSize, hideBubble, showBubble,
   };
 })();

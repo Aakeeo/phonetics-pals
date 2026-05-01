@@ -13,7 +13,7 @@
     {
       title: () => ['Letters are ', { a: 'sound friends!', cls: 'accent' }],
       body: 'Every letter has its own sound. Tap one to hear it say hi!',
-      teacher: () => "Letters are sound friends! Tap a letter to hear it.",
+      teacher: () => PP.data.tutorialNarration(0),
       demo: () => {
         const wrap = document.createElement('div');
         wrap.style.cssText = 'display:flex;gap:10px;flex-wrap:wrap;justify-content:center;';
@@ -26,12 +26,12 @@
         });
         return wrap;
       },
-      hear: () => speak("Letters are sound friends! Each letter has its own sound. Tap a letter to hear it!"),
+      hear: () => speak(PP.data.tutorialHear(0)),
     },
     {
       title: () => ['Put sounds together to ', { a: 'make words', cls: 'accent2' }, '!'],
       body: 'Push the sounds together: c-a-t squishes into "cat".',
-      teacher: () => "Sounds team up to make words. Tap to hear it!",
+      teacher: () => PP.data.tutorialNarration(1),
       demo: () => {
         const wrap = document.createElement('div');
         wrap.className = 'demo-blend';
@@ -50,12 +50,12 @@
         $('.word-out', wrap).addEventListener('click', () => { sfx.pop(); speak('Cat!'); });
         return wrap;
       },
-      hear: () => speak("Cat. Cat. The word cat is made of three sounds, all together: cat.", { rate: 0.85 }),
+      hear: () => speak(PP.data.tutorialHear(1), { rate: 0.85 }),
     },
     {
       title: () => ['Letter ', { a: 'buddies', cls: 'accent3' }, ' (digraphs)!'],
       body: 'Sometimes two letters team up to make ONE sound — like sh, ch, and th.',
-      teacher: () => "Two letters can team up. Listen to these buddies!",
+      teacher: () => PP.data.tutorialNarration(2),
       demo: () => {
         const wrap = document.createElement('div');
         wrap.className = 'demo-pair';
@@ -73,12 +73,12 @@
         });
         return wrap;
       },
-      hear: () => speak("Letter buddies! Ship. Chip. Thumb."),
+      hear: () => speak(PP.data.tutorialHear(2)),
     },
     {
       title: () => ['Short and ', { a: 'long vowels', cls: 'accent2' }, '!'],
       body: 'Short vowels say a quick sound. Long vowels say their NAME.',
-      teacher: () => "Short vowels are quick. Long vowels say their name!",
+      teacher: () => PP.data.tutorialNarration(3),
       demo: () => {
         const wrap = document.createElement('div');
         wrap.className = 'demo-pair';
@@ -97,12 +97,12 @@
         });
         return wrap;
       },
-      hear: () => speak("Short vowels make quick sounds. Cat. Pig. Long vowels say their name. Cake. Kite."),
+      hear: () => speak(PP.data.tutorialHear(3)),
     },
     {
       title: () => ['You\'re ', { a: 'ready!', cls: 'accent' }],
       body: 'Pick a game next. Earn a star for every right answer and collect cool stickers!',
-      teacher: () => "You're ready! Pick a game and let's play!",
+      teacher: () => PP.data.tutorialNarration(4),
       demo: () => {
         const wrap = document.createElement('div');
         wrap.style.cssText = 'display:flex;gap:14px;flex-wrap:wrap;justify-content:center;';
@@ -114,7 +114,7 @@
         });
         return wrap;
       },
-      hear: () => speak("You are ready! Pick a game and let's play!"),
+      hear: () => speak(PP.data.tutorialHear(4)),
     },
   ];
 
@@ -125,7 +125,7 @@
     PP.app.showScreen('tutorial');
     PP.teacher.setSize('small');
     render();
-    PP.teacher.say(PP.data.dialogue.tutorialIntro[0](PP.state.name), { mood: 'happy' });
+    setTimeout(() => PP.teacher.tutorialIntro(), 200);
   }
 
   function render() {
@@ -167,8 +167,8 @@
       sfx.tap();
       if (idx < slides.length - 1) { idx++; render(); }
       else {
-        PP.teacher.say(PP.data.dialogue.tutorialEnd[Math.floor(Math.random()*PP.data.dialogue.tutorialEnd.length)](PP.state.name), { mood: 'celebrate' });
-        setTimeout(() => PP.app.goToHub(), 600);
+        PP.teacher.tutorialEnd();
+        setTimeout(() => PP.app.goToHub(), 1200);
       }
     });
     $('#tut-hear').addEventListener('click', () => {
