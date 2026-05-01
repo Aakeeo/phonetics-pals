@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<meta name="theme-color" content="#fef8ec" />
+<title>Phonics Pals — with Mr. Pip</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/base.css" />
+<link rel="stylesheet" href="css/components.css" />
+<link rel="stylesheet" href="css/games.css" />
+</head>
+<body>
+
+<div id="app">
+  <!-- Decorative SVG defs (mascot, icons, shapes) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="squiggle" viewBox="0 0 100 20">
+        <path d="M2 10 Q 15 -2 28 10 T 54 10 T 80 10 T 98 10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+      </symbol>
+      <symbol id="star-shape" viewBox="0 0 24 24">
+        <path d="M12 2 L14.5 8.5 L21.5 9 L16 13.5 L17.8 20.5 L12 16.8 L6.2 20.5 L8 13.5 L2.5 9 L9.5 8.5 Z" fill="currentColor" stroke="#2a263d" stroke-width="1.5" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="sun-shape" viewBox="0 0 60 60">
+        <circle cx="30" cy="30" r="13" fill="#ffc94a" stroke="#2a263d" stroke-width="3"/>
+        <g stroke="#2a263d" stroke-width="3" stroke-linecap="round">
+          <line x1="30" y1="6" x2="30" y2="14"/><line x1="30" y1="46" x2="30" y2="54"/>
+          <line x1="6" y1="30" x2="14" y2="30"/><line x1="46" y1="30" x2="54" y2="30"/>
+          <line x1="13" y1="13" x2="18" y2="18"/><line x1="42" y1="42" x2="47" y2="47"/>
+          <line x1="13" y1="47" x2="18" y2="42"/><line x1="42" y1="18" x2="47" y2="13"/>
+        </g>
+      </symbol>
+      <symbol id="cloud-shape" viewBox="0 0 80 50">
+        <path d="M20 38 Q 8 38 8 28 Q 8 18 20 20 Q 22 8 36 10 Q 48 4 54 16 Q 70 14 70 28 Q 72 38 60 38 Z" fill="white" stroke="#2a263d" stroke-width="3" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="heart-shape" viewBox="0 0 24 24">
+        <path d="M12 21 C 4 14 2 10 4 6 C 6 2 11 3 12 7 C 13 3 18 2 20 6 C 22 10 20 14 12 21 Z" fill="currentColor" stroke="#2a263d" stroke-width="1.5" stroke-linejoin="round"/>
+      </symbol>
+
+      <!-- Mr. Pip the Owl -->
+      <symbol id="pip" viewBox="0 0 240 240">
+        <ellipse cx="120" cy="225" rx="70" ry="6" fill="rgba(42,38,61,.18)"/>
+        <!-- feet -->
+        <ellipse cx="100" cy="218" rx="14" ry="7" fill="#ffc94a" stroke="#2a263d" stroke-width="3"/>
+        <ellipse cx="140" cy="218" rx="14" ry="7" fill="#ffc94a" stroke="#2a263d" stroke-width="3"/>
+        <!-- body -->
+        <ellipse cx="120" cy="135" rx="80" ry="85" fill="#88d8a8" stroke="#2a263d" stroke-width="5"/>
+        <!-- belly -->
+        <ellipse cx="120" cy="155" rx="50" ry="58" fill="#fef8ec"/>
+        <!-- belly speckles -->
+        <circle cx="100" cy="155" r="3" fill="#e8d8a8"/>
+        <circle cx="135" cy="170" r="3" fill="#e8d8a8"/>
+        <circle cx="115" cy="190" r="3" fill="#e8d8a8"/>
+        <!-- left wing -->
+        <path class="pip-wing pip-wing-l" d="M48 130 Q 22 145 38 178 Q 55 188 68 175 Q 60 155 58 138 Z"
+              fill="#5fc587" stroke="#2a263d" stroke-width="4" stroke-linejoin="round"/>
+        <!-- right wing -->
+        <path class="pip-wing pip-wing-r" d="M192 130 Q 218 145 202 178 Q 185 188 172 175 Q 180 155 182 138 Z"
+              fill="#5fc587" stroke="#2a263d" stroke-width="4" stroke-linejoin="round"/>
+        <!-- ear tufts -->
+        <path d="M75 65 L70 38 L92 60" fill="#5fc587" stroke="#2a263d" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M165 65 L170 38 L148 60" fill="#5fc587" stroke="#2a263d" stroke-width="4" stroke-linejoin="round"/>
+        <!-- glasses frames -->
+        <circle cx="92" cy="108" r="26" fill="#fff" stroke="#2a263d" stroke-width="4"/>
+        <circle cx="148" cy="108" r="26" fill="#fff" stroke="#2a263d" stroke-width="4"/>
+        <line x1="118" y1="108" x2="122" y2="108" stroke="#2a263d" stroke-width="4"/>
+        <!-- eyes (default — happy) -->
+        <g class="pip-eyes pip-eyes-default">
+          <circle cx="92" cy="108" r="10" fill="#2a263d"/>
+          <circle cx="148" cy="108" r="10" fill="#2a263d"/>
+          <circle cx="95" cy="104" r="3.5" fill="#fff"/>
+          <circle cx="151" cy="104" r="3.5" fill="#fff"/>
+        </g>
+        <!-- eyes (happy/squint) -->
+        <g class="pip-eyes pip-eyes-happy">
+          <path d="M80 108 Q 92 100 104 108" fill="none" stroke="#2a263d" stroke-width="5" stroke-linecap="round"/>
+          <path d="M136 108 Q 148 100 160 108" fill="none" stroke="#2a263d" stroke-width="5" stroke-linecap="round"/>
+        </g>
+        <!-- eyes (surprised) -->
+        <g class="pip-eyes pip-eyes-surprised">
+          <circle cx="92" cy="108" r="13" fill="#fff" stroke="#2a263d" stroke-width="3"/>
+          <circle cx="148" cy="108" r="13" fill="#fff" stroke="#2a263d" stroke-width="3"/>
+          <circle cx="92" cy="108" r="6" fill="#2a263d"/>
+          <circle cx="148" cy="108" r="6" fill="#2a263d"/>
+        </g>
+        <!-- eyes (thinking — looking up-left) -->
+        <g class="pip-eyes pip-eyes-thinking">
+          <circle cx="86" cy="103" r="9" fill="#2a263d"/>
+          <circle cx="142" cy="103" r="9" fill="#2a263d"/>
+          <circle cx="89" cy="100" r="3" fill="#fff"/>
+          <circle cx="145" cy="100" r="3" fill="#fff"/>
+        </g>
+        <!-- beak -->
+        <path d="M120 130 L108 148 L132 148 Z" fill="#ffc94a" stroke="#2a263d" stroke-width="3" stroke-linejoin="round"/>
+        <!-- bowtie -->
+        <path d="M105 178 L88 170 L88 198 L105 192 Z" fill="#ff7e7e" stroke="#2a263d" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M135 178 L152 170 L152 198 L135 192 Z" fill="#ff7e7e" stroke="#2a263d" stroke-width="3" stroke-linejoin="round"/>
+        <circle cx="120" cy="185" r="7" fill="#ed5a5a" stroke="#2a263d" stroke-width="3"/>
+        <!-- cheek blush -->
+        <ellipse cx="74" cy="135" rx="9" ry="5" fill="#ff7e7e" opacity="0.55"/>
+        <ellipse cx="166" cy="135" rx="9" ry="5" fill="#ff7e7e" opacity="0.55"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <!-- ===================== WELCOME ===================== -->
+  <section id="screen-welcome" class="screen active">
+    <div class="bg-deco float-a" style="top:8%; left:6%; color:var(--sun);"><svg width="56" height="56"><use href="#star-shape"/></svg></div>
+    <div class="bg-deco float-b" style="top:12%; right:8%;"><svg width="80" height="50"><use href="#cloud-shape"/></svg></div>
+    <div class="bg-deco float-c" style="bottom:14%; left:10%; color:var(--coral);"><svg width="44" height="44"><use href="#heart-shape"/></svg></div>
+    <div class="bg-deco float-a" style="bottom:18%; right:6%;"><svg width="64" height="64"><use href="#sun-shape"/></svg></div>
+    <div class="bg-deco float-b" style="top:42%; left:4%; color:var(--grape-deep);"><svg width="60" height="60"><use href="#star-shape"/></svg></div>
+    <div class="bg-deco float-c" style="bottom:8%; right:14%; color:var(--sky);"><svg width="80" height="16"><use href="#squiggle"/></svg></div>
+
+    <div class="welcome-stack">
+      <h1 class="title">
+        <span class="word">Phonics</span>
+        <span class="word">Pals!</span>
+      </h1>
+      <p class="tagline">Sound class with <em>Mr. Pip</em>. Tap, listen, and read along!</p>
+
+      <div class="welcome-pip">
+        <div class="pip-character pip-large" data-mood="happy">
+          <svg viewBox="0 0 240 240"><use href="#pip"/></svg>
+        </div>
+      </div>
+
+      <div class="name-card">
+        <label class="name-label" for="name-input">What should I call you?</label>
+        <input type="text" id="name-input" placeholder="type your name" maxlength="14" autocomplete="off" spellcheck="false" />
+      </div>
+
+      <button class="btn btn-primary btn-huge btn-pulse" id="start-btn">
+        Start class! <span class="btn-arrow">→</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ===================== TUTORIAL ===================== -->
+  <section id="screen-tutorial" class="screen">
+    <button class="back-btn" data-back="welcome" aria-label="Back">←</button>
+    <div class="bg-deco float-a" style="top:6%; right:10%; color:var(--sun);"><svg width="44" height="44"><use href="#star-shape"/></svg></div>
+    <div class="bg-deco float-b" style="bottom:12%; left:8%; color:var(--mint-deep);"><svg width="60" height="60"><use href="#heart-shape"/></svg></div>
+
+    <div class="tut-stack">
+      <div class="tut-card" id="tut-card">
+        <div class="tut-num" id="tut-num">1</div>
+        <div class="bg-deco corner-deco" style="color:var(--coral);"><svg width="60" height="60"><use href="#star-shape"/></svg></div>
+        <h2 class="tut-title" id="tut-title"></h2>
+        <div class="tut-demo" id="tut-demo"></div>
+        <p class="tut-body" id="tut-body"></p>
+        <button class="btn btn-sky" id="tut-hear"><span class="ear">👂</span> Hear it again</button>
+      </div>
+
+      <div class="tut-actions">
+        <button class="btn btn-ghost btn-icon" id="tut-prev" aria-label="Previous">←</button>
+        <div class="tut-dots" id="tut-dots"></div>
+        <button class="btn btn-mint btn-icon" id="tut-next" aria-label="Next">→</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== HUB ===================== -->
+  <section id="screen-hub" class="screen">
+    <div class="hub-header">
+      <div class="greeting">Hi, <span id="hub-name">friend</span>!</div>
+      <div class="star-counter">
+        <span class="star-icon">⭐</span><span id="star-count">0</span>
+      </div>
+    </div>
+
+    <div class="bg-deco float-a" style="top:18%; right:6%; color:var(--coral);"><svg width="48" height="48"><use href="#heart-shape"/></svg></div>
+    <div class="bg-deco float-b" style="bottom:14%; left:6%;"><svg width="60" height="38"><use href="#cloud-shape"/></svg></div>
+
+    <h2 class="hub-title">Today's <span class="accent">lessons</span></h2>
+    <p class="hub-sub">Earn a star for every right answer. Collect cool stickers!</p>
+
+    <div class="game-grid">
+      <button class="game-card" data-game="soundmatch">
+        <div class="game-icon">👂</div>
+        <div class="game-title">Sound Match</div>
+        <div class="game-desc">Hear a sound, tap the right letter.</div>
+        <div class="game-stars" data-stars="soundmatch">⭐ 0</div>
+      </button>
+      <button class="game-card" data-game="wordbuilder">
+        <div class="game-icon">🧱</div>
+        <div class="game-title">Word Builder</div>
+        <div class="game-desc">Tap letters to spell the picture.</div>
+        <div class="game-stars" data-stars="wordbuilder">⭐ 0</div>
+      </button>
+      <button class="game-card" data-game="digraph">
+        <div class="game-icon">🔍</div>
+        <div class="game-title">Digraph Hunt</div>
+        <div class="game-desc">Find words with sh, ch, or th.</div>
+        <div class="game-stars" data-stars="digraph">⭐ 0</div>
+      </button>
+      <button class="game-card" data-game="vowel">
+        <div class="game-icon">🪣</div>
+        <div class="game-title">Vowel Sort</div>
+        <div class="game-desc">Short or long? Drop in the bucket.</div>
+        <div class="game-stars" data-stars="vowel">⭐ 0</div>
+      </button>
+    </div>
+
+    <div class="stickers-strip">
+      <div class="stickers-title">Sticker Collection</div>
+      <div class="stickers-row" id="stickers-row"></div>
+    </div>
+
+    <div class="hub-actions">
+      <button class="btn btn-grape" id="hub-cert">📜 My Certificate</button>
+      <button class="btn btn-ghost" id="hub-tutorial">📖 Tutorial</button>
+    </div>
+  </section>
+
+  <!-- ===================== GAMES ===================== -->
+  <section id="screen-soundmatch" class="screen game-screen">
+    <button class="back-btn" data-back="hub" aria-label="Back">←</button>
+    <div class="game-header">
+      <h2 class="game-title">Sound Match 👂</h2>
+      <p class="game-instruction">Listen to the word. Tap the letter that starts it!</p>
+      <div class="progress" id="sm-progress"></div>
+    </div>
+    <div class="game-area">
+      <div class="sm-prompt">
+        <div class="lbl">Listen carefully…</div>
+        <button class="hear-btn" id="sm-hear"><span class="ear">🔊</span> Play again</button>
+      </div>
+      <div class="sm-choices" id="sm-choices"></div>
+    </div>
+  </section>
+
+  <section id="screen-wordbuilder" class="screen game-screen">
+    <button class="back-btn" data-back="hub" aria-label="Back">←</button>
+    <div class="game-header">
+      <h2 class="game-title">Word Builder 🧱</h2>
+      <p class="game-instruction">Tap the letters in order to spell the picture.</p>
+      <div class="progress" id="wb-progress"></div>
+    </div>
+    <div class="game-area">
+      <div class="wb-clue">
+        <div class="wb-emoji" id="wb-emoji">🐱</div>
+        <div class="wb-hint" id="wb-hint">It says "meow!"</div>
+      </div>
+      <div class="wb-slots" id="wb-slots"></div>
+      <div class="wb-pool" id="wb-pool"></div>
+      <div class="wb-actions">
+        <button class="btn btn-ghost" id="wb-clear">Clear</button>
+        <button class="btn btn-sky" id="wb-hear-word"><span class="ear">🔊</span> Say the word</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="screen-digraph" class="screen game-screen">
+    <button class="back-btn" data-back="hub" aria-label="Back">←</button>
+    <div class="game-header">
+      <h2 class="game-title">Digraph Hunt 🔍</h2>
+      <p class="game-instruction">Find every word with the team-up sound!</p>
+      <div class="row">
+        <div class="dh-hint" id="dh-target">Find: sh</div>
+        <div class="dh-hint" style="background: var(--sun);">Found: <span id="dh-found">0</span> / <span id="dh-total">0</span></div>
+      </div>
+    </div>
+    <div class="game-area">
+      <div class="dh-board" id="dh-board"></div>
+    </div>
+  </section>
+
+  <section id="screen-vowel" class="screen game-screen">
+    <button class="back-btn" data-back="hub" aria-label="Back">←</button>
+    <div class="game-header">
+      <h2 class="game-title">Vowel Sort 🪣</h2>
+      <p class="game-instruction">Short vowels say a quick sound. Long vowels say their <em>name</em>!</p>
+      <div class="progress" id="vs-progress"></div>
+    </div>
+    <div class="game-area">
+      <div class="vs-current" id="vs-word">cat</div>
+      <button class="btn btn-ghost" id="vs-hear"><span class="ear">🔊</span> Hear the word</button>
+      <div class="vs-buckets">
+        <button class="vs-bucket short" data-len="short">
+          <div class="bucket-icon">🐱</div>
+          <div class="bucket-name">Short</div>
+          <div class="bucket-example">cat • sun • pig</div>
+        </button>
+        <button class="vs-bucket long" data-len="long">
+          <div class="bucket-icon">🎂</div>
+          <div class="bucket-name">Long</div>
+          <div class="bucket-example">cake • kite • rope</div>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== TEACHER PANEL (Mr. Pip) ===================== -->
+  <div class="pip-stage" id="pip-stage" data-size="small" aria-live="polite">
+    <div class="pip-bubble" id="pip-bubble">
+      <span class="pip-bubble-text" id="pip-bubble-text"></span>
+      <button class="pip-bubble-replay" id="pip-bubble-replay" aria-label="Replay">🔊</button>
+    </div>
+    <div class="pip-character" id="pip-character" data-mood="happy">
+      <svg viewBox="0 0 240 240"><use href="#pip"/></svg>
+    </div>
+  </div>
+
+  <!-- ===================== VOICE PICKER ===================== -->
+  <button class="voice-btn" id="voice-btn" aria-label="Pick voice" title="Pick voice">
+    <span class="voice-ico">🔈</span><span class="voice-lbl">Voice</span>
+  </button>
+  <div class="modal-overlay" id="voice-modal">
+    <div class="modal voice-modal-inner">
+      <h2>Pick Mr. Pip's <span>voice</span></h2>
+      <p class="modal-msg">Tap one to test it. Pick the warmest, clearest voice.</p>
+      <div class="voice-list" id="voice-list"></div>
+      <div class="voice-tip" id="voice-tip"></div>
+      <div class="modal-actions">
+        <button class="btn btn-mint" id="voice-close">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== RESULTS MODAL ===================== -->
+  <div class="modal-overlay" id="results-modal">
+    <div class="modal results-modal-inner">
+      <h2 id="results-title">Great work, <span id="results-name">friend</span>!</h2>
+      <div class="modal-stars" id="results-stars"></div>
+      <p class="modal-msg" id="results-msg">You earned 8 stars!</p>
+      <div class="modal-sticker hidden" id="results-sticker">
+        <div class="new" id="results-sticker-emoji">🎉</div>
+        <div class="new-info">
+          <div class="new-label">New sticker</div>
+          <div class="new-name" id="results-sticker-name">Star Pal</div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-grape" id="results-share">📜 Share</button>
+        <button class="btn btn-ghost" id="results-replay">Play again</button>
+        <button class="btn btn-mint" id="results-home">Back to lessons</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== CERTIFICATE / SHARE MODAL ===================== -->
+  <div class="modal-overlay" id="cert-modal">
+    <div class="modal cert-modal-inner">
+      <h2>Phonics Pal <span>Certificate</span></h2>
+      <div class="cert-preview-wrap">
+        <canvas id="cert-canvas" class="cert-canvas" width="1200" height="800"></canvas>
+      </div>
+      <div class="modal-actions cert-actions">
+        <button class="btn btn-mint" id="cert-download">⬇ Download</button>
+        <button class="btn btn-sky" id="cert-share">📤 Share</button>
+        <button class="btn btn-grape" id="cert-copy">📋 Copy text</button>
+        <button class="btn btn-ghost" id="cert-close">Close</button>
+      </div>
+      <p class="modal-msg" id="cert-status"></p>
+    </div>
+  </div>
+
+  <div id="confetti-layer"></div>
+</div>
+
+<script src="js/utils.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/data.js"></script>
+<script src="js/teacher.js"></script>
+<script src="js/confetti.js"></script>
+<script src="js/tutorial.js"></script>
+<script src="js/games/soundmatch.js"></script>
+<script src="js/games/wordbuilder.js"></script>
+<script src="js/games/digraph.js"></script>
+<script src="js/games/vowel.js"></script>
+<script src="js/hub.js"></script>
+<script src="js/results.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
